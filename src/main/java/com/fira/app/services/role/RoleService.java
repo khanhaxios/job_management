@@ -7,7 +7,6 @@ import com.fira.app.requests.role.UpdateRoleRequest;
 import com.fira.app.services.base.ICrudService;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Set;
 
 public interface RoleService extends ICrudService<CreateRoleRequest, UpdateRoleRequest, Long> {
     ResponseEntity<?> givePermToRole(Long roleId, AddPermToRoleRequest request);

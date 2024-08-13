@@ -1,9 +1,11 @@
 package com.fira.app.services.account;
 
 import com.fira.app.entities.Account;
+import com.fira.app.entities.IDCard;
 import com.fira.app.entities.Role;
 import com.fira.app.expceptions.AppException;
 import com.fira.app.repository.AccountRepository;
+import com.fira.app.repository.IDCardRepository;
 import com.fira.app.repository.RoleRepository;
 import com.fira.app.requests.account.CreateAccountRequest;
 import com.fira.app.requests.account.UpdateAccountRequest;
@@ -29,6 +31,7 @@ import java.util.Set;
 public class AccountServiceImpl implements AccountService {
     private final AccountRepository accountRepository;
 
+    private final IDCardRepository idCardRepository;
     private final RoleRepository roleRepository;
 
     @Override
@@ -71,8 +74,13 @@ public class AccountServiceImpl implements AccountService {
         if (updateAccountRequest.getExpiredAt().isBefore(updateAccountRequest.getIssuedAt())) {
             throw new AppException("Issued date should before expire date");
         }
-        BeanUtils.copyProperties(updateAccountRequest, account, BeanHelper.getNullPropertyNames(updateAccountRequest));
+        IDCard idCard = new IDCard();
+        BeanUtils.copyProperties(updateAccountRequest, idCard, BeanHelper.getNullPropertyNames(updateAccountRequest));
+        idCard.setID(updateAccountRequest.getID());
+        account.setPhone(updateAccountRequest.getPhone());
         account.setVerifiedAt(LocalDate.now());
+        IDCard savedId = idCardRepository.save(idCard);
+        account.setIdCard(savedId);
         return ResponseHelper.success(accountRepository.save(account));
     }
 }
