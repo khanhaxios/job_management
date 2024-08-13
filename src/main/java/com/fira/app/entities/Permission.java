@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Entity
 @Data
-public class Permission extends TimeStamps{
+public class Permission extends TimeStamps {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;

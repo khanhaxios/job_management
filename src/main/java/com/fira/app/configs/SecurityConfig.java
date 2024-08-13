@@ -1,6 +1,7 @@
 package com.fira.app.configs;
 
 import com.fira.app.enums.Role;
+import com.fira.app.expceptions.AccessDeinedHandler;
 import com.fira.app.filters.JwtFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletResponse;
@@ -8,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -53,6 +53,9 @@ public class SecurityConfig {
                 .exceptionHandling((ex) -> ex.authenticationEntryPoint((req, res, authEx) -> {
                     res.sendError(HttpServletResponse.SC_UNAUTHORIZED, authEx.getMessage());
                 }))
+                .exceptionHandling((e) -> {
+                    e.accessDeniedHandler(new AccessDeinedHandler());
+                })
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

@@ -16,6 +16,18 @@ public class Role extends TimeStamps {
     @Enumerated(EnumType.STRING)
     private com.fira.app.enums.Role name;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     private Set<Permission> permissions = new HashSet<>();
+
+    public void addPerm(Permission permission) {
+        if (!this.permissions.contains(permission)) {
+            this.permissions.add(permission);
+        }
+    }
+
+    public void removePerm(Permission permission) {
+        if (this.permissions.contains(permission)) {
+            this.permissions.remove(permission);
+        }
+    }
 }

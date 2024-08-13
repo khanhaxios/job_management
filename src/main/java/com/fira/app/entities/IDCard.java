@@ -18,4 +18,5 @@ public class IDCard {
     private LocalDate birthday;
     private String avatar;
     private String address;
+    private String pin;
 }

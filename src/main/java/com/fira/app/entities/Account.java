@@ -1,6 +1,7 @@
 package com.fira.app.entities;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
@@ -8,11 +9,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Entity
 @Data
@@ -24,13 +24,14 @@ public class Account extends TimeStamps implements UserDetails {
 
     @Id
     private String id;
-    private String email;
 
+    private String email;
     private String password;
+    @Column(unique = true)
     private String username;
     private String phone;
-    private boolean active;
-    private boolean verify;
+    private boolean active = true;
+    private boolean verify = false;
     private LocalDate verifiedAt;
 
     @OneToOne
@@ -42,7 +43,10 @@ public class Account extends TimeStamps implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<Permission> permissions = role.getPermissions();
-        return permissions.stream().map(permission -> new SimpleGrantedAuthority(permission.toString())).collect(Collectors.toList());
+        Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        permissions.forEach(permission -> authorities.add(new SimpleGrantedAuthority(permission.toString())));
+        authorities.add(new SimpleGrantedAuthority(this.role.getName().toString()));
+        return authorities;
     }
 
     @Override
