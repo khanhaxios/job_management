@@ -1,5 +1,6 @@
 package com.fira.app.apis;
 
+import com.fira.app.requests.account.CreateAccountRequest;
 import com.fira.app.requests.account.UpdateAccountRequest;
 import com.fira.app.services.account.AccountService;
 import com.fira.app.utils.ResponseHelper;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@CrossOrigin
 @RequestMapping("/api/accounts")
 public class AccountApi {
 
@@ -19,6 +21,15 @@ public class AccountApi {
     public ResponseEntity<?> completeAccount(@PathVariable(name = "id") String id, @Valid @RequestBody UpdateAccountRequest request) {
         try {
             return accountService.completeAccountInfo(id, request);
+        } catch (Exception e) {
+            return ResponseHelper.serverError(e.getMessage());
+        }
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createAccount(@Valid @RequestBody CreateAccountRequest request) {
+        try {
+            return accountService.store(request);
         } catch (Exception e) {
             return ResponseHelper.serverError(e.getMessage());
         }
