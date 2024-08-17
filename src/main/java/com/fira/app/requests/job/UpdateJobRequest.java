@@ -16,4 +16,5 @@ public class UpdateJobRequest {
     private Date timeStart;
     private Date timeEnd;
     private String additionInfo;
+    private String attachment;
 }
