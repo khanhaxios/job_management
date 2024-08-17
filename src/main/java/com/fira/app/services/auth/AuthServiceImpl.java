@@ -37,6 +37,9 @@ public class AuthServiceImpl implements AuthService {
         if (!account.isActive()) {
             return ResponseHelper.badRequest("Your account is baned");
         }
+        if (!account.isVerify()) {
+            return ResponseHelper.badRequest("Your account not verify");
+        }
         return mapAccountResponse(account);
     }
 

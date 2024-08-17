@@ -40,6 +40,9 @@ public class Account extends TimeStamps implements UserDetails {
     @ManyToOne
     private Role role;
 
+    @ManyToOne
+    private Account manager;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<Permission> permissions = role.getPermissions();
