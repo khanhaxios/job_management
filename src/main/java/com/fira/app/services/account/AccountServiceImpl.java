@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.Set;
 
 @Service
@@ -81,6 +82,8 @@ public class AccountServiceImpl implements AccountService {
         account.setVerifiedAt(LocalDate.now());
         IDCard savedId = idCardRepository.save(idCard);
         account.setIdCard(savedId);
+        account.setVerifiedAt(LocalDate.now());
+        account.setVerify(true);
         return ResponseHelper.success(accountRepository.save(account));
     }
 }
