@@ -17,14 +17,7 @@ public class AccountApi {
 
     private final AccountService accountService;
 
-    @PutMapping("/compete-account/{id}")
-    public ResponseEntity<?> completeAccount(@PathVariable(name = "id") String id, @Valid @RequestBody UpdateAccountRequest request) {
-        try {
-            return accountService.completeAccountInfo(id, request);
-        } catch (Exception e) {
-            return ResponseHelper.serverError(e.getMessage());
-        }
-    }
+
 
     @PostMapping
     public ResponseEntity<?> createAccount(@Valid @RequestBody CreateAccountRequest request) {
