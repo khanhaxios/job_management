@@ -32,8 +32,8 @@ public class AuthApi {
         }
     }
 
-    @PutMapping("/compete-account/{id}")
-    public ResponseEntity<?> completeAccount(@PathVariable(name = "id") String id, @Valid @RequestBody UpdateAccountRequest request) {
+    @PutMapping("/compete-account/{username}")
+    public ResponseEntity<?> completeAccount(@PathVariable(name = "username") String id, @Valid @RequestBody UpdateAccountRequest request) {
         try {
             return accountService.completeAccountInfo(id, request);
         } catch (Exception e) {

@@ -15,7 +15,9 @@ import com.fira.app.utils.ResponseHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -66,12 +69,20 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public ResponseEntity<?> getAll(Pageable pageable, String fieldSort, String sortDesc, String query) throws Exception {
-        return null;
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDesc), fieldSort);
+        Pageable pageOf = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+        if (!Objects.equals(query, "")) {
+            return ResponseHelper.success(accountRepository.findAllByUsernameContaining(pageOf, query));
+        }
+        return ResponseHelper.success(accountRepository.findAll(pageable));
     }
 
     @Override
     public ResponseEntity<?> completeAccountInfo(String accountId, UpdateAccountRequest updateAccountRequest) throws Exception {
-        Account account = accountRepository.findById(accountId).orElseThrow(() -> new AppException("Account Not Found"));
+        Account account = accountRepository.findByUsername(accountId).orElse(null);
+        if (account == null) {
+            return ResponseHelper.notFound("Account not found");
+        }
         if (updateAccountRequest.getExpiredAt().isBefore(updateAccountRequest.getIssuedAt())) {
             throw new AppException("Issued date should before expire date");
         }

@@ -46,7 +46,7 @@ public class SecurityConfig {
                                     "/configuration/security",
                                     "/webjars/**"
                             ).permitAll()
-                            .requestMatchers("/api/accounts/**").hasRole(Role.ADMIN.toString())
+                            .requestMatchers("/api/accounts/**").hasAnyAuthority(Role.ADMIN.toString())
                             .anyRequest().authenticated();
                 })
                 .sessionManagement(Customizer.withDefaults())

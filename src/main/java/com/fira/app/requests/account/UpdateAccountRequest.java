@@ -1,12 +1,11 @@
 package com.fira.app.requests.account;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Past;
-import jakarta.validation.constraints.Pattern;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.Date;
 
 @Data
 public class UpdateAccountRequest {
@@ -17,12 +16,14 @@ public class UpdateAccountRequest {
     private String phone;
 
     @Past(message = "Birthday has to a pass day")
-    private String birthday;
+    private LocalDate birthday;
 
     @NotNull
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
     @Past(message = "Issue Date has to a pass day")
     private LocalDate issuedAt;
     @NotNull
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
     private LocalDate expiredAt;
 
     @NotNull
@@ -31,5 +32,6 @@ public class UpdateAccountRequest {
     private String address;
 
     @NotNull
+    @Size(min = 6,max = 6)
     private String pin;
 }
