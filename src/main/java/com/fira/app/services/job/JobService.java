@@ -1,15 +1,16 @@
 package com.fira.app.services.job;
 
-import com.fira.app.requests.job.*;
+import com.fira.app.entities.Job;
+import com.fira.app.requests.job.CreateJobRequest;
+import com.fira.app.requests.job.UpdateJobRequest;
 import com.fira.app.services.base.ICrudService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
+
 public interface JobService extends ICrudService<CreateJobRequest, UpdateJobRequest, String> {
-    ResponseEntity<?> giveJobForUser(String jobId, GiveJobForUserRequest request) throws Exception;
+    ResponseEntity<?> createAndPushNotification(List<Job> jobs, String content);
 
-    ResponseEntity<?> evoluteJob(String jobId, EvoluteJobRequest request) throws Exception;
-
-    ResponseEntity<?> updateUserJobDetailRequest(String jobId, UpdateUserJobDetailRequest request) throws Exception;
-
-    ResponseEntity<?> getById(String s) throws Exception;
+    ResponseEntity<?> getByUser(Pageable pageable, String sortBy, String sortDir, String query);
 }

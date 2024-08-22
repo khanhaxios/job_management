@@ -11,7 +11,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class SocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/all", "/notifications");
+        registry.enableSimpleBroker("/all", "/queue", "/user");
         registry.setApplicationDestinationPrefixes("/app");
     }
 

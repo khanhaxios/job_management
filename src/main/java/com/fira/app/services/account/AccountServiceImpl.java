@@ -6,6 +6,7 @@ import com.fira.app.entities.Role;
 import com.fira.app.expceptions.AppException;
 import com.fira.app.repository.AccountRepository;
 import com.fira.app.repository.IDCardRepository;
+import com.fira.app.repository.PermissionRepository;
 import com.fira.app.repository.RoleRepository;
 import com.fira.app.requests.account.CreateAccountRequest;
 import com.fira.app.requests.account.UpdateAccountRequest;
@@ -28,6 +29,8 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.fira.app.contraints.UserContaints.LIST_USER_PERM_IDS;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -38,6 +41,8 @@ public class AccountServiceImpl implements AccountService {
     private final IDCardRepository idCardRepository;
     private final RoleRepository roleRepository;
 
+    private final PermissionRepository permissionRepository;
+
     @Override
     public ResponseEntity<?> store(CreateAccountRequest createAccountRequest) throws Exception {
         Account account = accountRepository.findByUsername(createAccountRequest.getUsername()).orElse(null);
@@ -46,9 +51,13 @@ public class AccountServiceImpl implements AccountService {
             throw new AppException("Account Exited");
         }
         account = new Account();
+        // inti role for account
         BeanUtils.copyProperties(createAccountRequest, account, BeanHelper.getNullPropertyNames(createAccountRequest));
         account.setPassword(new BCryptPasswordEncoder().encode(createAccountRequest.getPassword()));
         account.setRole(role);
+        for (Integer id : LIST_USER_PERM_IDS) {
+            account.getRole().addPerm(permissionRepository.findById(Long.valueOf(id)).orElse(null));
+        }
         return ResponseHelper.success(accountRepository.save(account));
     }
 
@@ -72,7 +81,7 @@ public class AccountServiceImpl implements AccountService {
         Sort sort = Sort.by(Sort.Direction.fromString(sortDesc), fieldSort);
         Pageable pageOf = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
         if (!Objects.equals(query, "")) {
-            return ResponseHelper.success(accountRepository.findAllByUsernameContaining(pageOf, query));
+            return ResponseHelper.success(accountRepository.findAllByEmailContaining(pageOf, query));
         }
         return ResponseHelper.success(accountRepository.findAll(pageable));
     }

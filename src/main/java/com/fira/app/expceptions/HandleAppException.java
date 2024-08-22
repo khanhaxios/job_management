@@ -21,10 +21,10 @@ import java.util.Map;
 @RestControllerAdvice
 public class HandleAppException {
 
-    @ExceptionHandler(AppException.class)
-    public ResponseEntity<?> handleAppException(AppException exception) {
-        return ResponseHelper.badRequest(exception.getMessage());
-    }
+//    @ExceptionHandler(AppException.class)
+//    public ResponseEntity<?> handleAppException(AppException exception) {
+//        return ResponseHelper.badRequest(exception.getMessage());
+//    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleValidRequestException(MethodArgumentNotValidException exception) {
@@ -54,6 +54,6 @@ public class HandleAppException {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleOtherException(Exception exception) {
-        return ResponseEntity.internalServerError().body(ApiResponse.builder().code(-11111).message(exception.getMessage()));
+        return ResponseEntity.internalServerError().body(ApiResponse.builder().code(-11111).message(exception.getMessage()).build());
     }
 }

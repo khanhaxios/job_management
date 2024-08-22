@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,10 +15,9 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin
 @RequestMapping("/api/accounts")
 public class AccountApi {
-
     private final AccountService accountService;
 
-
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @PostMapping
     public ResponseEntity<?> createAccount(@Valid @RequestBody CreateAccountRequest request) {
         try {
@@ -27,8 +27,9 @@ public class AccountApi {
         }
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @GetMapping
-    public ResponseEntity<?> getAll(Pageable pageable, @RequestParam(name = "sortBy") String sortBy, @RequestParam(name = "sortDirection") String sortDir, @RequestParam(name = "query") String query) {
+    public ResponseEntity<?> getAll(Pageable pageable, @RequestParam(name = "sortBy") String sortBy, @RequestParam(name = "sortDirection", defaultValue = "desc") String sortDir, @RequestParam(name = "query", defaultValue = "") String query) {
         try {
             return accountService.getAll(pageable, sortBy, sortDir, query);
         } catch (Exception e) {

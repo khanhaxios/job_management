@@ -1,46 +1,29 @@
 package com.fira.app.requests.job;
 
-import com.fira.app.enums.JobStatus;
-import jakarta.validation.constraints.NotBlank;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 public class CreateJobRequest {
-    @NotBlank(message = "Title required")
-    private String title;
-    @NotNull(message = "Priority required")
-    private int priority;
-
-    private int progress = 0;
-    @NotNull
-    private JobStatus jobStatus = JobStatus.PENDING;
-
-    @NotNull(message = "Point per job is required")
-    private int pointPerJob;
 
     @NotNull
-    private boolean isTask;
+    private String jobName;
 
-    @NotBlank(message = "Creator id required")
-    private String userCreateJobId;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
+    @NotNull
+    private LocalDate timeStart;
 
-    private List<String> staffsGotJobId = new ArrayList<>();
+    @NotNull
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
+    private LocalDate timeEnd;
 
-    @NotBlank(message = "Description is required")
-    private String description;
+    private Set<String> memberIds = new HashSet<>();
+    private Set<CreateNewJobLabelRequest> labels = new HashSet<>();
 
-    private String note;
-
-    private String target;
-
-    private Date timeStart;
-    private Date timeEnd;
-
-    private String additionInfo;
-    private String attachment;
 }

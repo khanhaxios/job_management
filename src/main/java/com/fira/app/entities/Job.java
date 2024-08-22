@@ -1,65 +1,62 @@
 package com.fira.app.entities;
 
-import com.fira.app.enums.JobStatus;
-import com.fira.app.repository.AccountRepository;
-import com.fira.app.repository.UserJobRepository;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Entity
 @Data
-public class Job {
+@Table(name = "jobs")
+public class Job extends TimeStamps {
     @jakarta.persistence.Id
     private String Id;
-
-    private String title;
-
-    @OneToMany
-    private List<UserJob> userJobs = new ArrayList<>();
-
-    private String attachment;
-
-    @ManyToOne
-    private Account manager;
-
-    @OneToOne
-    private JobDetail jobDetail;
-
-    @CreationTimestamp
-    private LocalDate createdAt;
-
-    @UpdateTimestamp
-    private LocalDate updatedAt;
-
 
     public Job() {
         this.Id = UUID.randomUUID().toString();
     }
 
-    public void addStaffToJob(Account user, UserJobRepository userJobRepository) {
-        UserJob userJob = new UserJob();
-        userJob.setProgress(0);
-        userJob.setCachedProgress(0);
-        userJob.setStatus(JobStatus.PROCESS);
-        userJob.setUser(user);
-        userJob.setJobId(this.Id);
-        this.userJobs.add(userJobRepository.save(userJob));
+    @NotNull
+    private String jobName;
+
+    @NotNull
+    private LocalDate timeStart;
+
+    @NotNull
+    private LocalDate timeEnd;
+
+    @ManyToOne
+    private Account manager;
+    @ManyToMany
+    private Set<Account> members = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<ContributesHistory> contributesHistories = new HashSet<>();
+    @OneToMany
+    private Set<TaskRow> taskRows = new HashSet<>();
+
+    @OneToMany
+    private Set<TaskLabel> taskLabels = new HashSet<>();
+
+    public void addMember(Account account) {
+        this.members.add(account);
     }
 
-    public void removeStaff(Account user, UserJobRepository userJobRepository) {
-        UserJob userJob = userJobRepository.findByUserAndJobId(user, this.Id);
-        if (userJob != null) {
-            this.userJobs.remove(userJob);
-        }
+    public void removeMember(Account account) {
+        this.members.remove(account);
+    }
+
+    public void addRow(TaskRow taskRow) {
+        this.taskRows.add(taskRow);
+    }
+
+    public void removeRow(TaskRow taskRow) {
+        this.taskRows.remove(taskRow);
     }
 }

@@ -1,15 +1,17 @@
 package com.fira.app.services.job;
 
 import com.fira.app.entities.*;
-import com.fira.app.enums.JobStatus;
 import com.fira.app.enums.NotificationType;
-import com.fira.app.enums.Role;
-import com.fira.app.repository.*;
-import com.fira.app.requests.job.*;
+import com.fira.app.repository.AccountRepository;
+import com.fira.app.repository.JobRepository;
+import com.fira.app.repository.NotificationRepository;
+import com.fira.app.repository.TaskLabelRepository;
+import com.fira.app.requests.job.CreateJobRequest;
+import com.fira.app.requests.job.CreateNewJobLabelRequest;
+import com.fira.app.requests.job.UpdateJobRequest;
 import com.fira.app.utils.BeanHelper;
 import com.fira.app.utils.ResponseHelper;
 import com.fira.app.utils.SecurityHelper;
-import com.fira.app.utils.SocketPushingUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -17,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,84 +27,109 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
+@RequiredArgsConstructor
 @Slf4j
 public class JobServiceImpl implements JobService {
-    private final AccountRepository accountRepository;
-
-    private final UserJobRepository userJobRepository;
-    private final JobDetailRepository jobDetailRepository;
-
-    private final NotificationRepository notificationRepository;
-    private final SocketPushingUtils socketPushingUtils;
     private final JobRepository jobRepository;
+    private final TaskLabelRepository taskLabelRepository;
+
+    private final AccountRepository accountRepository;
+    private final NotificationRepository notificationRepository;
+
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
     @Override
     public ResponseEntity<?> store(CreateJobRequest createJobRequest) throws Exception {
-        Account user = accountRepository.findById(createJobRequest.getUserCreateJobId()).orElse(null);
-        if (user == null) {
-            return ResponseHelper.badRequest("User creation not found!");
-        }
-        if (createJobRequest.getStaffsGotJobId().size() <= 0) {
-            return ResponseHelper.badRequest("Need more staff got job to create");
-        }
         Job job = new Job();
         BeanUtils.copyProperties(createJobRequest, job, BeanHelper.getNullPropertyNames(createJobRequest));
-        if (createJobRequest.getStaffsGotJobId() != null) {
-            for (String sId : createJobRequest.getStaffsGotJobId()) {
-                Account staff = accountRepository.findById(sId).orElse(null);
-                if (staff != null) {
-                    if (!staff.getId().equals(user.getId())) {
-                        job.addStaffToJob(staff, userJobRepository);
-                    }
-                }
-            }
+        for (String id : createJobRequest.getMemberIds()) {
+            accountRepository.findById(id).ifPresent(job::addMember);
         }
-        job.setManager(user);
-        JobDetail jobDetail = new JobDetail();
-        jobDetail.setDescription(createJobRequest.getDescription());
-        jobDetail.setNote(createJobRequest.getNote());
-        jobDetail.setTarget(createJobRequest.getTarget());
-        jobDetail.setAdditionInfo(createJobRequest.getAdditionInfo());
-        jobDetail.setTimeStart(createJobRequest.getTimeStart());
-        jobDetail.setTimeEnd(createJobRequest.getTimeEnd());
-        job.setJobDetail(jobDetailRepository.save(jobDetail));
-        return pushNotificationForStaff(job, "Bạn vừa được giao một công việc");
-    }
-
-    private ResponseEntity pushNotificationForStaff(Job job, String content) {
-        List<Notification> notifications = new ArrayList<>();
-        for (UserJob userJob : job.getUserJobs()) {
-            Notification notification = new Notification();
-            notification.setFromUser(job.getManager().getId());
-            notification.setContent(content);
-            notification.setData(job.getId());
-            notification.setToUser(userJob.getUser().getId());
-            notification.setNotificationType(NotificationType.JOB);
-            notifications.add(notification);
+        job.getTaskLabels().addAll(createNewLabelList(createJobRequest.getLabels()));
+        // get current account;
+        Account manager = SecurityHelper.getAccountFromLogged(accountRepository);
+        if (manager == null) {
+            return ResponseHelper.accessDenied("Access deined");
         }
-        notificationRepository.saveAll(notifications);
-        socketPushingUtils.pushNotification(notifications.get(0));
-        return ResponseHelper.success();
+        job.addMember(manager);
+        job.setManager(manager);
+        // push all notification to user
+        return createAndPushNotification(job, "Bạn vừa có một công việc mới.");
     }
 
     @Override
     public ResponseEntity<?> update(UpdateJobRequest updateJobRequest) throws Exception {
-        Job job = jobRepository.findById(updateJobRequest.getJobId()).orElseThrow(() -> new Exception("Job not found"));
+        Job job = jobRepository.findById(updateJobRequest.getJobId()).orElse(null);
+        if (job == null) {
+            return ResponseHelper.notFound("Job not found!");
+        }
+        if (job.getContributesHistories().size() != 0) {
+            if (updateJobRequest.getTimeStart() != null) {
+                return ResponseHelper.badRequest("Job has history contributes cannot change time start");
+            }
+        }
         BeanUtils.copyProperties(updateJobRequest, job, BeanHelper.getNullPropertyNames(updateJobRequest));
-        JobDetail jobDetail = job.getJobDetail();
-        BeanUtils.copyProperties(updateJobRequest, jobDetail, BeanHelper.getNullPropertyNames(updateJobRequest));
-        job.setJobDetail(jobDetailRepository.save(jobDetail));
+        // handle member
+        switch (updateJobRequest.getMemberAction()) {
+            case ADD -> updateJobRequest.getListMemberIds().forEach(m -> {
+                accountRepository.findById(m).ifPresent(member -> job.addMember(accountRepository.findById(m).orElse(null)));
+            });
+            case RESET -> {
+                job.getMembers().clear();
+                updateJobRequest.getListMemberIds().forEach(m -> {
+                    accountRepository.findById(m).ifPresent(member -> job.addMember(accountRepository.findById(m).orElse(null)));
+                });
+            }
+            case REMOVE -> {
+                updateJobRequest.getListMemberIds().forEach(m -> {
+                    accountRepository.findById(m).ifPresent(member -> job.removeMember(accountRepository.findById(m).orElse(null)));
+                });
+            }
+        }
+        switch (updateJobRequest.getLabelAction()) {
+            case ADD -> {
+                List<TaskLabel> taskLabels = createNewLabelList(updateJobRequest.getLabels());
+                job.getTaskLabels().addAll(taskLabelRepository.saveAll(taskLabels));
+            }
+            case REST -> {
+                List<TaskLabel> taskLabels = createNewLabelList(updateJobRequest.getLabels());
+                job.getMembers().clear();
+                job.getTaskLabels().addAll(taskLabelRepository.saveAll(taskLabels));
+            }
+            case REMOVE -> {
+                updateJobRequest.getRemoveLabelIds().forEach(s -> {
+                    job.getTaskLabels().remove(taskLabelRepository.findById(s).orElse(null));
+                });
+            }
+        }
+        // handle done
+        // handle label
         return ResponseHelper.success(jobRepository.save(job));
+    }
 
+    private List<TaskLabel> createNewLabelList(Set<CreateNewJobLabelRequest> createJobRequests) {
+        return createJobRequests.stream().map(this::createNewLabel).toList();
+    }
+
+    private TaskLabel createNewLabel(CreateNewJobLabelRequest createNewJobTableRequest) {
+        TaskLabel taskLabel = new TaskLabel();
+        BeanUtils.copyProperties(taskLabel, createNewJobTableRequest, BeanHelper.getNullPropertyNames(createNewJobTableRequest));
+        return taskLabel;
     }
 
     @Override
     public ResponseEntity<?> destroy(String s) throws Exception {
-        // delete job
+        Job job = jobRepository.findById(s).orElse(null);
+        if (job == null) return ResponseHelper.notFound("Job not found");
+        job.getMembers().clear();
+        job.getTaskRows().clear();
+        job.getContributesHistories().clear();
+        job.getTaskLabels().clear();
+        jobRepository.save(job);
         jobRepository.deleteById(s);
         return ResponseHelper.success();
     }
@@ -116,102 +144,43 @@ public class JobServiceImpl implements JobService {
         Sort sort = Sort.by(Sort.Direction.fromString(sortDesc), fieldSort);
         Pageable pageOf = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
         if (!Objects.equals(query, "")) {
-            return ResponseHelper.success(jobRepository.findByTitleContaining(pageOf, query));
+            return ResponseHelper.success(jobRepository.findAllByJobNameContaining(pageOf, query));
         }
         return ResponseHelper.success(jobRepository.findAll(pageable));
     }
 
     @Override
-    public ResponseEntity<?> giveJobForUser(String jobId, GiveJobForUserRequest request) throws Exception {
-        Job job = jobRepository.findById(jobId).orElseThrow(() -> new Exception("Job not found"));
-        if (!SecurityHelper.getLoggedUser().equals(job.getManager().getUsername())) {
-            return ResponseHelper.accessDenied("U do not permission!");
-        }
-        for (String sId : request.getUserIds()) {
-            if (!sId.equals(job.getManager().getId())) {
-                Account user = accountRepository.findById(sId).orElse(null);
-                if (user != null) {
-                    boolean hasExit = false;
-                    for (UserJob userJob : job.getUserJobs()) {
-                        if (userJob.getUser().getId().equals(sId)) {
-                            hasExit = true;
-                        }
-                    }
-                    if (!hasExit) {
-                        job.addStaffToJob(user, userJobRepository);
-                        pushNotificationForStaff(job, "Bạn vừa được giao một công việc");
-                    }
-                }
-
-            }
-        }
-        return ResponseHelper.success(jobRepository.save(job));
+    public ResponseEntity<?> createAndPushNotification(List<Job> jobs, String content) {
+        return null;
     }
 
     @Override
-    public ResponseEntity<?> evoluteJob(String jobId, EvoluteJobRequest request) throws Exception {
-        Job job = jobRepository.findById(jobId).orElseThrow(() -> new Exception("Job not found"));
-        Account currentUser = SecurityHelper.getAccountFromLogged(accountRepository);
-        if (currentUser == null) {
-            return ResponseHelper.accessDenied("You do not permission");
+    public ResponseEntity<?> getByUser(Pageable pageable, String sortBy, String sortDir, String query) {
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDir), sortBy);
+        Pageable pageOf = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+        Account currentMember = SecurityHelper.getAccountFromLogged(accountRepository);
+        if (!Objects.equals(query, "")) {
+            return ResponseHelper.success(jobRepository.findAllByJobNameContainingAndMembers(pageOf, query, currentMember));
         }
-        if (request.getJobEvaluate() != null) {
-            if (!Objects.equals(currentUser.getRole().getName(), Role.ADMIN.toString())) {
-                if (!Objects.equals(currentUser.getRole().getName(), Role.MANAGER.toString())) {
-                    return ResponseHelper.accessDenied("You do not permission");
-                }
-                if (!job.getManager().getId().equals(currentUser.getId())) {
-                    return ResponseHelper.accessDenied("You do not permission");
-                }
-            }
-            // push notification
-            job.getUserJobs().forEach((j) -> {
-                if (j.getUser().getId().equals(request.getUserId())) {
-                    j.setJobEvaluate(request.getJobEvaluate());
-                    userJobRepository.save(j);
-                    try {
-                        pushNotificationForStaff(job, "Có một công việc đã được đánh giá bởi manager");
-                    } catch (Exception e) {
-                        log.error(e.getMessage());
-                    }
-                }
-            });
-            jobRepository.save(job);
+        return ResponseHelper.success(jobRepository.findAllByMembers(pageable, currentMember));
+    }
+
+    public ResponseEntity<?> createAndPushNotification(Job job, String content) throws Exception {
+        Job savedJob = jobRepository.save(job);
+        List<Notification> notifications = new ArrayList<>();
+        for (Account member : savedJob.getMembers()) {
+            Notification notification = new Notification();
+            notification.setNotificationType(NotificationType.JOB);
+            notification.setData(savedJob.getId());
+            notification.setContent(content);
+            notification.setToUser(member.getUsername());
+            notification.setFromUser(savedJob.getManager().getEmail());
+            notifications.add(notification);
+        }
+        notifications = notificationRepository.saveAll(notifications);
+        for (Notification notification : notifications) {
+            simpMessagingTemplate.convertAndSendToUser(notification.getToUser(), "/queue/notifications", notification);
         }
         return ResponseHelper.success();
-    }
-
-    @Override
-    public ResponseEntity<?> updateUserJobDetailRequest(String jobId, UpdateUserJobDetailRequest request) throws Exception {
-        Job job = jobRepository.findById(jobId).orElse(null);
-        if (job == null) {
-            return ResponseHelper.notFound("Job not found");
-        }
-        for (UserJob userJob : job.getUserJobs()) {
-            if (userJob.getUser().getId().equals(request.getUserId())) {
-                int oldProgress = userJob.getProgress();
-                BeanUtils.copyProperties(request, userJob);
-                userJob.setProgress(oldProgress);
-                userJob.setCachedProgress(request.getProgress());
-                if (request.getStatus() == JobStatus.DONE) {
-                    // push notification
-                    userJob.setStatus(JobStatus.DONE);
-                    // luu lich su cong diem
-//
-//                    KpiHistory kpiHistory = new KpiHistory();
-//                    kpiHistory.setUser(userJob.getUser());
-//                    kpiHistoryService.createNewFromOtherService("Cộng " + job.getPointPerJob() + " điểm từ job : " + job.getId(), userJob.getUser());
-//                    pushNotificationForAStaff(jobId, userJob.getUser(), job.getManager(), "Bạn vừa hoàn thành một công việc");
-                }
-                userJobRepository.save(userJob);
-            }
-            jobRepository.save(job);
-        }
-        return ResponseHelper.success();
-    }
-
-    @Override
-    public ResponseEntity<?> getById(String s) throws Exception {
-        return ResponseHelper.success(jobRepository.findById(s));
     }
 }
