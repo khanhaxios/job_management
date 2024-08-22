@@ -16,6 +16,8 @@ public class UpdateAccountRequest {
     private String phone;
 
     @Past(message = "Birthday has to a pass day")
+ @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
+
     private LocalDate birthday;
 
     @NotNull
