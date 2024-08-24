@@ -34,7 +34,7 @@ public class TaskRowServiceImpl implements TaskRowService {
     public ResponseEntity<?> store(CreateNewTaskRowRequest createNewTaskRowRequest) throws Exception {
         TaskRow taskRow = new TaskRow();
         taskRow.setRowName(createNewTaskRowRequest.getRowName());
-        taskRow.setOrder(createNewTaskRowRequest.getOrder());
+        taskRow.setInOrder(createNewTaskRowRequest.getOrder());
         TaskRow savedRow = taskRowRepository.save(taskRow);
         Job job = jobRepository.findById(createNewTaskRowRequest.getJobId()).orElse(null);
         if (job == null) {

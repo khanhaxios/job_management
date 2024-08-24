@@ -20,5 +20,5 @@ public class TaskRow extends TimeStamps {
 
     @OneToMany
     private Set<Task> tasks = new HashSet<>();
-    private int order;
+    private int inOrder;
 }
