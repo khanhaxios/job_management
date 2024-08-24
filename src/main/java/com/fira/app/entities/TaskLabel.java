@@ -10,6 +10,7 @@ import lombok.Data;
 @Table(name = "task_labels")
 public class TaskLabel {
     @jakarta.persistence.Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long Id;
 
     @NotNull
