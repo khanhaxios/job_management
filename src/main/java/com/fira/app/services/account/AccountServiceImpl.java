@@ -48,7 +48,7 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountRepository.findByUsername(createAccountRequest.getUsername()).orElse(null);
         Role role = roleRepository.findByName(createAccountRequest.getRole()).orElse(null);
         if (account != null) {
-            throw new AppException("Account Exited");
+            return ResponseHelper.badRequest("Account exited!");
         }
         account = new Account();
         // inti role for account

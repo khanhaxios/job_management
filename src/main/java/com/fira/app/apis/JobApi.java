@@ -30,7 +30,7 @@ public class JobApi {
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER','MANAGE_JOB_READ')")
     @GetMapping
-    public ResponseEntity<?> getAllJob(Pageable pageable, @RequestParam(name = "sortBy") String sortBy, @RequestParam(name = "sortDirection", defaultValue = "desc") String sortDir, @RequestParam(name = "query", defaultValue = "") String query) {
+    public ResponseEntity<?> getAllJob(Pageable pageable, @RequestParam(name = "sortBy", defaultValue = "jobName") String sortBy, @RequestParam(name = "sortDirection", defaultValue = "desc") String sortDir, @RequestParam(name = "query", defaultValue = "") String query) {
         try {
             return jobService.getAll(pageable, sortBy, sortDir, query);
         } catch (Exception e) {

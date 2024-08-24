@@ -29,7 +29,7 @@ public class AccountApi {
 
     @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @GetMapping
-    public ResponseEntity<?> getAll(Pageable pageable, @RequestParam(name = "sortBy") String sortBy, @RequestParam(name = "sortDirection", defaultValue = "desc") String sortDir, @RequestParam(name = "query", defaultValue = "") String query) {
+    public ResponseEntity<?> getAll(Pageable pageable, @RequestParam(name = "sortBy", defaultValue = "username") String sortBy, @RequestParam(name = "sortDirection", defaultValue = "desc") String sortDir, @RequestParam(name = "query", defaultValue = "") String query) {
         try {
             return accountService.getAll(pageable, sortBy, sortDir, query);
         } catch (Exception e) {

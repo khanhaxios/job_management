@@ -49,7 +49,7 @@ public class JobServiceImpl implements JobService {
         for (String id : createJobRequest.getMemberIds()) {
             accountRepository.findById(id).ifPresent(job::addMember);
         }
-        job.getTaskLabels().addAll(createNewLabelList(createJobRequest.getLabels()));
+        job.getTaskLabels().addAll(taskLabelRepository.saveAll(createNewLabelList(createJobRequest.getLabels())));
         // get current account;
         Account manager = SecurityHelper.getAccountFromLogged(accountRepository);
         if (manager == null) {
@@ -112,12 +112,18 @@ public class JobServiceImpl implements JobService {
     }
 
     private List<TaskLabel> createNewLabelList(Set<CreateNewJobLabelRequest> createJobRequests) {
-        return createJobRequests.stream().map(this::createNewLabel).toList();
+        List<TaskLabel> taskLabels = new ArrayList<>();
+        for (CreateNewJobLabelRequest labelRequest : createJobRequests) {
+            taskLabels.add(createNewLabel(labelRequest));
+        }
+        return taskLabels;
     }
 
     private TaskLabel createNewLabel(CreateNewJobLabelRequest createNewJobTableRequest) {
         TaskLabel taskLabel = new TaskLabel();
-        BeanUtils.copyProperties(taskLabel, createNewJobTableRequest, BeanHelper.getNullPropertyNames(createNewJobTableRequest));
+        taskLabel.setLabelName(createNewJobTableRequest.getLabelName());
+        taskLabel.setType(createNewJobTableRequest.getLabelType());
+        taskLabel.setLabelColor(createNewJobTableRequest.getLabelColor());
         return taskLabel;
     }
 
