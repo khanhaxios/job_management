@@ -14,10 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/permissions")
 @RequiredArgsConstructor
 @CrossOrigin
-@Slf4j
+@RequestMapping("/api/permissions")
 public class PermissionApi {
     private final PermissionRepository permissionRepository;
 

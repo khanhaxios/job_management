@@ -36,8 +36,7 @@ public class AttachmentServiceImpl implements AttachmentService {
             if (filename == null) continue;
             Path filePath = path.resolve(filename);
             Files.copy(file.getInputStream(), filePath);
-            String fileDownloadUri = filePath.toAbsolutePath().toString();
-            attachment.setPath(fileDownloadUri);
+            attachment.setPath(filename);
         }
         return ResponseHelper.success(attachmentRepository.saveAll(resultPaths));
     }

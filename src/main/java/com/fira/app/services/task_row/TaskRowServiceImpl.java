@@ -52,6 +52,7 @@ public class TaskRowServiceImpl implements TaskRowService {
             return ResponseHelper.notFound("Task row not found");
         }
         BeanUtils.copyProperties(updateNewTaskRowRequest, taskRow, BeanHelper.getNullPropertyNames(updateNewTaskRowRequest));
+        taskRow.setInOrder(updateNewTaskRowRequest.getOrder());
         return ResponseHelper.success(taskRowRepository.save(taskRow));
     }
 

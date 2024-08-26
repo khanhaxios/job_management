@@ -40,4 +40,13 @@ public class AttachmentApi {
             return ResponseHelper.serverError(e.getMessage());
         }
     }
+
+    @GetMapping("/{path}")
+    public ResponseEntity<?> downloadAttachment(@PathVariable(name = "path") String path) {
+        try {
+            return attachmentService.getFile(Paths.get(String.valueOf(this.path), path).toAbsolutePath().toString());
+        } catch (Exception e) {
+            return ResponseHelper.serverError(e.getMessage());
+        }
+    }
 }
