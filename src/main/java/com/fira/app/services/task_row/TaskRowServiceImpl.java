@@ -7,6 +7,7 @@ import com.fira.app.repository.TaskRepository;
 import com.fira.app.repository.TaskRowRepository;
 import com.fira.app.requests.task_row.CreateNewTaskRowRequest;
 import com.fira.app.requests.task_row.UpdateNewTaskRowRequest;
+import com.fira.app.requests.task_row.UpdateTaskInRowRequest;
 import com.fira.app.utils.BeanHelper;
 import com.fira.app.utils.ResponseHelper;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -81,5 +83,23 @@ public class TaskRowServiceImpl implements TaskRowService {
             return ResponseHelper.success(taskRowRepository.findAllByRowName(pageOf, query));
         }
         return ResponseHelper.success(taskRowRepository.findAll(pageable));
+    }
+
+    @Override
+    public ResponseEntity<?> updateTaskInRow(Long rowId, UpdateTaskInRowRequest request) {
+        TaskRow taskRow = taskRowRepository.findById(rowId).orElse(null);
+        if (taskRow == null) {
+            return ResponseHelper.notFound("Row not found");
+        }
+        switch (request.getAction()) {
+            case REMOVE -> {
+                taskRepository.findAllById(request.getTaskIds()).forEach(taskRow.getTasks()::remove);
+            }
+            case REST -> {
+                taskRow.getTasks().clear();
+                taskRow.getTasks().addAll(taskRepository.findAllById(request.getTaskIds()));
+            }
+        }
+        return ResponseHelper.success(taskRowRepository.save(taskRow));
     }
 }

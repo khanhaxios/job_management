@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,6 +21,8 @@ public class Task extends TimeStamps {
 
     private String taskDescription;
 
+    private LocalDate timeStart;
+    private LocalDate timeEnd;
     @Enumerated(EnumType.STRING)
     private TaskProgress taskProgress;
 
@@ -37,4 +40,20 @@ public class Task extends TimeStamps {
 
     @ManyToOne
     private TaskLabel taskLabel;
+
+    public void addAssgiment(Account account) {
+        this.assignments.add(account);
+    }
+
+    public void removeAssgiment(Account account) {
+        this.assignments.remove(account);
+    }
+
+    public void addComment(TaskComment taskComment) {
+        this.taskComments.add(taskComment);
+    }
+
+    public void removeComment(TaskComment taskComment) {
+        this.taskComments.remove(taskComment);
+    }
 }

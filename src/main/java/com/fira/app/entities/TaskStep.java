@@ -1,5 +1,6 @@
 package com.fira.app.entities;
 
+import com.fira.app.enums.StepStatus;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,6 +23,7 @@ public class TaskStep {
 
     private String description;
 
+    private StepStatus status;
     private LocalDateTime timeStart;
     private LocalDateTime timeEnd;
 }

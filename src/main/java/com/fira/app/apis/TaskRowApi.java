@@ -2,6 +2,7 @@ package com.fira.app.apis;
 
 import com.fira.app.requests.task_row.CreateNewTaskRowRequest;
 import com.fira.app.requests.task_row.UpdateNewTaskRowRequest;
+import com.fira.app.requests.task_row.UpdateTaskInRowRequest;
 import com.fira.app.services.task_row.TaskRowService;
 import com.fira.app.utils.ResponseHelper;
 import jakarta.validation.Valid;
@@ -39,6 +40,15 @@ public class TaskRowApi {
     public ResponseEntity<?> edit(@Valid @RequestBody UpdateNewTaskRowRequest request) {
         try {
             return taskRowService.update(request);
+        } catch (Exception e) {
+            return ResponseHelper.serverError(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateTasks(@PathVariable(name = "id") Long id, @Valid @RequestBody UpdateTaskInRowRequest request) {
+        try {
+            return taskRowService.updateTaskInRow(id, request);
         } catch (Exception e) {
             return ResponseHelper.serverError(e.getMessage());
         }

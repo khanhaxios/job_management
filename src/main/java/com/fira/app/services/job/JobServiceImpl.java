@@ -106,8 +106,6 @@ public class JobServiceImpl implements JobService {
                 });
             }
         }
-        // handle done
-        // handle label
         return ResponseHelper.success(jobRepository.save(job));
     }
 

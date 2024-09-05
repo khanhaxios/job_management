@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class CreateTaskAttachmentRequest {
-
+    private Long Id;
     private String path;
 }
