@@ -27,9 +27,7 @@ public class CreateNewTaskRequest {
     @NotNull
     private long taskRowId;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
-    @Past
     private LocalDate timeStart;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
-    @Past
     private LocalDate timeEnd;
 }
