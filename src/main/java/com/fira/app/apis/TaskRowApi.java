@@ -36,6 +36,15 @@ public class TaskRowApi {
         }
     }
 
+    @GetMapping("/by-job/{jobId}")
+    public ResponseEntity<?> getByJob(@PathVariable(name = "jobId") String jobId) {
+        try {
+            return taskRowService.getRowByJob(jobId);
+        } catch (Exception e) {
+            return ResponseHelper.serverError(e.getMessage());
+        }
+    }
+
     @PutMapping
     public ResponseEntity<?> edit(@Valid @RequestBody UpdateNewTaskRowRequest request) {
         try {

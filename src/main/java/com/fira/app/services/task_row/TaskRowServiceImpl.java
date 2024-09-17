@@ -64,6 +64,12 @@ public class TaskRowServiceImpl implements TaskRowService {
         if (taskRow == null) {
             return ResponseHelper.notFound("Task row not found");
         }
+        Job job = jobRepository.findByTaskRowsContaining(taskRow);
+        if (job == null) {
+            return ResponseHelper.notFound("Job not found");
+        }
+        job.removeRow(taskRow);
+        jobRepository.save(job);
         taskRow.getTasks().clear();
         taskRowRepository.save(taskRow);
         taskRowRepository.deleteById(aLong);
@@ -73,6 +79,15 @@ public class TaskRowServiceImpl implements TaskRowService {
     @Override
     public ResponseEntity<?> destroyAll(Set<Long> longs) throws Exception {
         return null;
+    }
+
+    @Override
+    public ResponseEntity<?> getRowByJob(String jobId) {
+        Job job = jobRepository.findById(jobId).orElse(null);
+        if (job == null) {
+            return ResponseHelper.notFound("Job not found by id " + jobId);
+        }
+        return ResponseHelper.success(job.getTaskRows());
     }
 
     @Override

@@ -8,4 +8,6 @@ import org.springframework.http.ResponseEntity;
 
 public interface TaskRowService extends ICrudService<CreateNewTaskRowRequest, UpdateNewTaskRowRequest, Long> {
     ResponseEntity<?> updateTaskInRow(Long rowId, UpdateTaskInRowRequest request);
+
+    ResponseEntity<?> getRowByJob(String jobId);
 }
