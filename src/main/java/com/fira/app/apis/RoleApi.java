@@ -1,9 +1,11 @@
 package com.fira.app.apis;
 
 import com.fira.app.requests.role.AddPermToRoleRequest;
+import com.fira.app.requests.role.CreateRoleRequest;
 import com.fira.app.requests.role.RemovePermFromRoleRequest;
 import com.fira.app.services.role.RoleService;
 import com.fira.app.utils.ResponseHelper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,15 @@ public class RoleApi {
     public ResponseEntity<?> getAllRole(@RequestParam(name = "query", required = false, defaultValue = "") String query, @RequestParam(name = "sortBy", defaultValue = "name") String sortBy, @RequestParam(name = "sortDirection", defaultValue = "desc") String sortDirection, Pageable pageable) {
         try {
             return roleService.getAll(pageable, sortBy, sortDirection, query);
+        } catch (Exception e) {
+            return ResponseHelper.serverError(e.getMessage());
+        }
+    }
+
+    @PostMapping
+    public ResponseEntity<?> addRole(@Valid @RequestBody CreateRoleRequest request) {
+        try {
+            return roleService.store(request);
         } catch (Exception e) {
             return ResponseHelper.serverError(e.getMessage());
         }

@@ -13,8 +13,7 @@ public class Role extends TimeStamps {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    private com.fira.app.enums.Role name;
+    private String name;
 
     @ManyToMany(fetch = FetchType.EAGER)
     private Set<Permission> permissions = new HashSet<>();

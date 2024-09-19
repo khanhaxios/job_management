@@ -17,8 +17,8 @@ public class RoleSeeder implements CommandLineRunner, Ordered {
     @Override
     public void run(String... args) throws Exception {
         for (Role value : Role.values()) {
-            com.fira.app.entities.Role role = repository.findByName(value).orElse(new com.fira.app.entities.Role());
-            role.setName(value);
+            com.fira.app.entities.Role role = repository.findByName(value.toString()).orElse(new com.fira.app.entities.Role());
+            role.setName(value.toString());
             repository.save(role);
         }
     }

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RoleRepository extends JpaRepository<Role, Long> {
-    Optional<Role> findByName(com.fira.app.enums.Role name);
+    Optional<Role> findByName(String name);
 
     List<Role> findByNameContaining(Pageable pageable, com.fira.app.enums.Role name);
 }

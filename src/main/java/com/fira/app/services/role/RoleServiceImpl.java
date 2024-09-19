@@ -33,7 +33,19 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public ResponseEntity<?> store(CreateRoleRequest createRoleRequest) {
-        return null;
+        com.fira.app.entities.Role role = new com.fira.app.entities.Role();
+        com.fira.app.entities.Role exit = roleRepository.findByName(createRoleRequest.getName()).orElse(null);
+        if (exit != null) {
+            return ResponseHelper.badRequest("Role exited");
+        }
+        role.setName(createRoleRequest.getName());
+        for (Long id : createRoleRequest.getPermIds()) {
+            Permission permission = permissionRepository.findById(id).orElse(null);
+            if (permission != null) {
+                role.addPerm(permission);
+            }
+        }
+        return ResponseHelper.success(roleRepository.save(role));
     }
 
     @Override

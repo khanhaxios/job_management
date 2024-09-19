@@ -46,7 +46,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public ResponseEntity<?> store(CreateAccountRequest createAccountRequest) throws Exception {
         Account account = accountRepository.findByUsername(createAccountRequest.getUsername()).orElse(null);
-        Role role = roleRepository.findByName(createAccountRequest.getRole()).orElse(null);
+        Role role = roleRepository.findByName(createAccountRequest.getRole().toString()).orElse(null);
         if (account != null) {
             return ResponseHelper.badRequest("Account exited!");
         }

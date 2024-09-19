@@ -40,7 +40,7 @@ public class AccountSeeder implements CommandLineRunner, Ordered {
                 return;
             }
             account.setPassword(new BCryptPasswordEncoder().encode(password));
-            account.setRole(roleRepository.findByName(Role.ADMIN).orElse(null));
+            account.setRole(roleRepository.findByName(Role.ADMIN.toString()).orElse(null));
             accountRepository.save(account);
             System.out.println("Created admin account success");
         } catch (Exception e) {
