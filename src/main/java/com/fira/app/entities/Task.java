@@ -20,7 +20,7 @@ public class Task extends TimeStamps {
     private String taskName;
 
     private String taskDescription;
-
+    private int kpiCount;
     private LocalDate timeStart;
     private LocalDate timeEnd;
     @Enumerated(EnumType.STRING)

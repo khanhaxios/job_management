@@ -1,5 +1,6 @@
 package com.fira.app.apis;
 
+import com.fira.app.requests.account.AddStaffToAccountRequest;
 import com.fira.app.requests.account.CreateAccountRequest;
 import com.fira.app.services.account.AccountService;
 import com.fira.app.utils.ResponseHelper;
@@ -32,6 +33,26 @@ public class AccountApi {
     public ResponseEntity<?> getAll(Pageable pageable, @RequestParam(name = "sortBy", defaultValue = "username") String sortBy, @RequestParam(name = "sortDirection", defaultValue = "desc") String sortDir, @RequestParam(name = "query", defaultValue = "") String query) {
         try {
             return accountService.getAll(pageable, sortBy, sortDir, query);
+        } catch (Exception e) {
+            return ResponseHelper.serverError(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
+    @PutMapping("/add-staff/{id}")
+    public ResponseEntity<?> addStaff(@PathVariable(name = "id") String Id, @RequestBody AddStaffToAccountRequest request) {
+        try {
+            return accountService.addStaff(Id, request.getStaffIds());
+        } catch (Exception e) {
+            return ResponseHelper.serverError(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
+    @PutMapping("/remove-staff/{id}")
+    public ResponseEntity<?> removeStaff(@PathVariable(name = "id") String Id, @RequestBody AddStaffToAccountRequest request) {
+        try {
+            return accountService.removeStaff(Id, request.getStaffIds());
         } catch (Exception e) {
             return ResponseHelper.serverError(e.getMessage());
         }

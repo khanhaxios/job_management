@@ -8,10 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Data
@@ -32,6 +29,18 @@ public class Account extends TimeStamps implements UserDetails {
     private boolean active = true;
     private boolean verify = false;
     private LocalDate verifiedAt;
+
+    @OneToMany
+    private Set<Account> staffs = new HashSet<>();
+
+
+    public void addStaff(Account account) {
+        this.staffs.add(account);
+    }
+
+    public void removeStaff(Account account) {
+        this.staffs.remove(account);
+    }
 
     @OneToOne
     private IDCard idCard;

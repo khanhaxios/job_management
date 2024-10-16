@@ -11,7 +11,6 @@ import java.util.Set;
 
 @Data
 public class CreateJobRequest {
-
     @NotNull
     private String jobName;
 

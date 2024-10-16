@@ -14,6 +14,7 @@ import com.fira.app.utils.ApiResponse;
 import com.fira.app.utils.BeanHelper;
 import com.fira.app.utils.ResponseHelper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -84,6 +86,30 @@ public class AccountServiceImpl implements AccountService {
             return ResponseHelper.success(accountRepository.findAllByEmailContaining(pageOf, query));
         }
         return ResponseHelper.success(accountRepository.findAll(pageable));
+    }
+
+    @Override
+    public ResponseEntity<?> addStaff(String accountId, Set<String> staffId) {
+        Account manager = accountRepository.findById(accountId).orElse(null);
+        if (manager == null) {
+            return ResponseHelper.notFound("");
+        }
+        List<Account> accounts = accountRepository.findAllById(staffId);
+        manager.getStaffs().addAll(accounts);
+        accountRepository.save(manager);
+        return ResponseHelper.success();
+    }
+
+    @Override
+    public ResponseEntity<?> removeStaff(String accountId, Set<String> staffId) {
+        Account manager = accountRepository.findById(accountId).orElse(null);
+        if (manager == null) {
+            return ResponseHelper.notFound("");
+        }
+        List<Account> accounts = accountRepository.findAllById(staffId);
+        manager.getStaffs().removeAll(accounts);
+        accountRepository.save(manager);
+        return ResponseHelper.success();
     }
 
     @Override

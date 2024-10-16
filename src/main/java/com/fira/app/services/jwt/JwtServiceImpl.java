@@ -25,50 +25,69 @@ public class JwtServiceImpl implements JwtService {
 
 
     @Override
-    public String extractUserName(String token) {
+    public String extractUserName(String token)
+     {
         return extractClaims(token, Claims::getSubject);
     }
 
     @Override
-    public String signToken(UserDetails userDetails) {
+    public String signToken(UserDetails userDetails) 
+    {
         return signToken(new HashMap<>(), userDetails);
     }
 
     @Override
-    public String signToken(Map<String, Objects> claims, UserDetails userDetails) {
-        return Jwts.builder().setClaims(claims).setSubject(userDetails.getUsername()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + SECRET_EXPIRED)).signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
+    public String signToken(Map<String, Objects> claims, UserDetails userDetails)
+     {
+        return Jwts.builder()
+        .setClaims(claims)
+        .setSubject(userDetails.getUsername())
+        .setIssuedAt(new Date(System.currentTimeMillis()))
+        .setExpiration(new Date(System.currentTimeMillis() + SECRET_EXPIRED))
+        .signWith(getSignKey(), SignatureAlgorithm.HS256)
+        .compact();
     }
 
     @Override
-    public <T> T extractClaims(String token, Function<Claims, T> claimsTFunction) {
+    public <T> T extractClaims(String token, Function<Claims, T> claimsTFunction) 
+    {
         Claims claims = extractAll(token);
         return claimsTFunction.apply(claims);
     }
 
     @Override
-    public boolean isTokenValid(String token, UserDetails userDetails) {
+    public boolean isTokenValid(String token, UserDetails userDetails) 
+    {
         String username = extractUserName(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
     @Override
-    public boolean isTokenExpired(String token) {
+    public boolean isTokenExpired(String token) 
+    {
         Date expired = extractExpired(token);
         return expired.before(new Date(System.currentTimeMillis()));
     }
 
     @Override
-    public Date extractExpired(String token) {
+    public Date extractExpired(String token) 
+    {
         return extractClaims(token, Claims::getExpiration);
     }
 
     @Override
-    public Claims extractAll(String token) {
-        return Jwts.parser().setSigningKey(getSignKey()).build().parseSignedClaims(token).getPayload();
+    public Claims extractAll(String token)
+     {
+        return Jwts.parser()
+        .setSigningKey(getSignKey())
+        .build()
+        .parseSignedClaims(token)
+        .getPayload();
     }
 
     @Override
-    public Key getSignKey() {
+    public Key getSignKey() 
+    {
         byte[] keyBytes = SECRET_KEY.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
 
