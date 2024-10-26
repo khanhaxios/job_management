@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,13 +34,13 @@ public class ScheduleCheckerServiceImpl implements ScheduleCheckerService {
         if (time.getHour() >= 6 && time.getHour() <= 10) {
             return CheckInSchedule.MORNING;
         }
-        if (time.getHour() >= 10 && time.getHour() <= 18) {
+        if (time.getHour() > 10 && time.getHour() <= 18) {
             return CheckInSchedule.AFTERNOON;
         }
-        if (time.getHour() >= 18) {
+        if (time.getHour() > 18) {
             return CheckInSchedule.NIGHT;
         }
-        return CheckInSchedule.MORNING;
+        return null;
     }
 
     private int[] getHoursRangerByCheckSchedule(CheckInSchedule checkInSchedule) {
@@ -46,10 +48,10 @@ public class ScheduleCheckerServiceImpl implements ScheduleCheckerService {
             case MORNING -> {
                 return new int[]{6, 10};
             }
-            case NIGHT -> {
+            case AFTERNOON -> {
                 return new int[]{10, 18};
             }
-            case AFTERNOON -> {
+            case NIGHT -> {
                 return new int[]{18, 23};
             }
         }
@@ -60,6 +62,8 @@ public class ScheduleCheckerServiceImpl implements ScheduleCheckerService {
     public ResponseEntity<?> checkIn() {
         // just checked in
         // first get current user
+        long late = 0;
+        long early = 0;
         LocalDateTime now = LocalDateTime.now();
         Account account = SecurityHelper.getAccountFromLogged(accountRepository);
         if (account == null) {
@@ -67,19 +71,34 @@ public class ScheduleCheckerServiceImpl implements ScheduleCheckerService {
         }
         // check now time
         CheckInSchedule checkInSchedule = this.getByTime(now);
+        if (checkInSchedule == null) {
+            return ResponseHelper.badRequest("Over time to check in");
+        }
         int[] hoursByCheckIn = this.getHoursRangerByCheckSchedule(checkInSchedule);
+        LocalDateTime timeMax = LocalDateTime.now().withHour(hoursByCheckIn[1]).withMinute(0).withSecond(0);
+        LocalDateTime timeMin = LocalDateTime.now().withHour(hoursByCheckIn[0]).withMinute(0).withSecond(0);
+
         LocalDateTime timeStart = LocalDateTime.now().withHour(hoursByCheckIn[0]);
         LocalDateTime timeEnd = LocalDateTime.now().withHour(hoursByCheckIn[1]);
+        // late
+        if (timeEnd.isAfter(timeMax)) {
+            late = timeEnd.toInstant(ZoneOffset.UTC).toEpochMilli() - timeMax.toInstant(ZoneOffset.UTC).toEpochMilli();
+        }
+        if (timeStart.isBefore(timeMin)) {
+            early = timeStart.toInstant(ZoneOffset.UTC).toEpochMilli() - timeMin.toInstant(ZoneOffset.UTC).toEpochMilli();
+        }
         List<ScheduleChecker> isExists = checkerRepository.findAllByUserCheckedAndCheckedAtBetween(account, timeStart, timeEnd);
         if (isExists != null) {
-            if (isExists.stream().filter(s -> s.getCheckType().equals(ScheduleCheckType.CHECKIN)).collect(Collectors.toList()).size() > 0) {
+            if (isExists.stream().filter(s -> s.getCheckType().equals(ScheduleCheckType.CHECKIN)).toList().size() > 0) {
                 return ResponseHelper.badRequest("U'r checked in");
             }
         }
         ScheduleChecker scheduleChecker = new ScheduleChecker();
         scheduleChecker.setCheckedAt(now);
+        scheduleChecker.setTimeLate(late);
         scheduleChecker.setCheckInSchedule(checkInSchedule);
         scheduleChecker.setUserChecked(account);
+        scheduleChecker.setTimeEarly(early);
         scheduleChecker.setCheckType(ScheduleCheckType.CHECKIN);
         return ResponseHelper.success(checkerRepository.save(scheduleChecker));
     }
@@ -88,6 +107,8 @@ public class ScheduleCheckerServiceImpl implements ScheduleCheckerService {
     public ResponseEntity<?> checkout() {
         // just checked in
         // first get current user
+        long earlyTime = 0;
+        long lateTime = 0;
         LocalDateTime now = LocalDateTime.now();
         Account account = SecurityHelper.getAccountFromLogged(accountRepository);
         if (account == null) {
@@ -95,10 +116,19 @@ public class ScheduleCheckerServiceImpl implements ScheduleCheckerService {
         }
         // check now time
         CheckInSchedule checkInSchedule = this.getByTime(now);
+        if (checkInSchedule == null) {
+            return ResponseHelper.badRequest("Overtime to check out");
+        }
         int[] hoursByCheckIn = this.getHoursRangerByCheckSchedule(checkInSchedule);
+        LocalDateTime timeMin = LocalDateTime.now().withHour(hoursByCheckIn[1]).withMinute(0).withSecond(0);
+
         LocalDateTime timeStart = LocalDateTime.now().withHour(hoursByCheckIn[0]);
         LocalDateTime timeEnd = LocalDateTime.now().withHour(hoursByCheckIn[1]);
-
+        if (timeEnd.isBefore(timeMin)) {
+            earlyTime = timeMin.toInstant(ZoneOffset.UTC).toEpochMilli() - timeEnd.toInstant(ZoneOffset.UTC).toEpochMilli();
+        } else {
+            lateTime = timeMin.toInstant(ZoneOffset.UTC).toEpochMilli() - timeMin.toInstant(ZoneOffset.UTC).toEpochMilli();
+        }
         List<ScheduleChecker> isExists = checkerRepository.findAllByUserCheckedAndCheckedAtBetween(account, timeStart, timeEnd);
         if (isExists != null) {
             if (isExists.stream().filter(s -> s.getCheckType().equals(ScheduleCheckType.CHECKIN)).toList().size() == 0) {
@@ -113,6 +143,8 @@ public class ScheduleCheckerServiceImpl implements ScheduleCheckerService {
         scheduleChecker.setCheckedAt(now);
         scheduleChecker.setCheckInSchedule(checkInSchedule);
         scheduleChecker.setUserChecked(account);
+        scheduleChecker.setTimeEarly(earlyTime);
+        scheduleChecker.setTimeLate(lateTime);
         scheduleChecker.setCheckType(ScheduleCheckType.CHECKOUT);
         return ResponseHelper.success(checkerRepository.save(scheduleChecker));
     }

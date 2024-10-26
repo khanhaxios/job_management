@@ -2,6 +2,7 @@ package com.fira.app.apis;
 
 import com.fira.app.requests.account.AddStaffToAccountRequest;
 import com.fira.app.requests.account.CreateAccountRequest;
+import com.fira.app.requests.account.UpdateAccountRequest;
 import com.fira.app.services.account.AccountService;
 import com.fira.app.utils.ResponseHelper;
 import jakarta.validation.Valid;
@@ -57,4 +58,23 @@ public class AccountApi {
             return ResponseHelper.serverError(e.getMessage());
         }
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable(name = "id") String Id, @Valid @RequestBody UpdateAccountRequest request) {
+        try {
+            return accountService.updateAccount(Id, request);
+        } catch (Exception e) {
+            return ResponseHelper.serverError(e.getMessage());
+        }
+    }
+
+    @PutMapping("/lock-account/{id}")
+    public ResponseEntity<?> update(@PathVariable(name = "id") String Id) {
+        try {
+            return accountService.lockAccount(Id);
+        } catch (Exception e) {
+            return ResponseHelper.serverError(e.getMessage());
+        }
+    }
+
 }

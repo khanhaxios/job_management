@@ -14,5 +14,9 @@ public interface AccountService extends ICrudService<CreateAccountRequest, Updat
 
     ResponseEntity<?> removeStaff(String accountId, Set<String> staffId);
 
+    ResponseEntity<?> updateAccount(String accountId, UpdateAccountRequest request);
+
+    ResponseEntity<?> lockAccount(String accountId);
+
     ResponseEntity<?> completeAccountInfo(String accountId, UpdateAccountRequest updateAccountRequest) throws Exception;
 }

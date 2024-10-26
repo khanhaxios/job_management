@@ -1,5 +1,6 @@
 package com.fira.app.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fira.app.enums.CheckInSchedule;
 import com.fira.app.enums.ScheduleCheckType;
 import jakarta.persistence.*;
@@ -23,6 +24,10 @@ public class ScheduleChecker {
     @Enumerated(EnumType.STRING)
     private CheckInSchedule checkInSchedule;
 
+    private long timeLate;
+    private long timeEarly;
+
     @ManyToOne
+    @JsonIgnore
     private Account userChecked;
 }

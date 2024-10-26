@@ -107,8 +107,44 @@ public class AccountServiceImpl implements AccountService {
             return ResponseHelper.notFound("");
         }
         List<Account> accounts = accountRepository.findAllById(staffId);
-        manager.getStaffs().removeAll(accounts);
+        accounts.forEach(manager.getStaffs()::remove);
         accountRepository.save(manager);
+        return ResponseHelper.success();
+    }
+
+    @Override
+    public ResponseEntity<?> updateAccount(String accountId, UpdateAccountRequest request) {
+        Account account = accountRepository.findByUsername(accountId).orElse(null);
+        if (account == null) {
+            return ResponseHelper.notFound("Account not found");
+        }
+        if (request.getExpiredAt().isBefore(request.getIssuedAt())) {
+            throw new AppException("Issued date should before expire date");
+        }
+        idCardRepository.findById(request.getID()).ifPresent(idCard -> copyAccountUpdateRequest(request, account, idCard));
+        return ResponseHelper.success(accountRepository.save(account));
+
+    }
+
+    private void copyAccountUpdateRequest(UpdateAccountRequest request, Account account, IDCard idCard) {
+        BeanUtils.copyProperties(request, idCard, BeanHelper.getNullPropertyNames(request));
+        idCard.setID(request.getID());
+        account.setPhone(request.getPhone());
+        account.setVerifiedAt(LocalDate.now());
+        IDCard savedId = idCardRepository.save(idCard);
+        account.setIdCard(savedId);
+        account.setVerifiedAt(LocalDate.now());
+        account.setVerify(true);
+    }
+
+    @Override
+    public ResponseEntity<?> lockAccount(String accountId) {
+        Account account = accountRepository.findByUsername(accountId).orElse(null);
+        if (account == null) {
+            return ResponseHelper.notFound("Account not found");
+        }
+        account.setActive(false);
+        accountRepository.save(account);
         return ResponseHelper.success();
     }
 
@@ -122,14 +158,7 @@ public class AccountServiceImpl implements AccountService {
             throw new AppException("Issued date should before expire date");
         }
         IDCard idCard = new IDCard();
-        BeanUtils.copyProperties(updateAccountRequest, idCard, BeanHelper.getNullPropertyNames(updateAccountRequest));
-        idCard.setID(updateAccountRequest.getID());
-        account.setPhone(updateAccountRequest.getPhone());
-        account.setVerifiedAt(LocalDate.now());
-        IDCard savedId = idCardRepository.save(idCard);
-        account.setIdCard(savedId);
-        account.setVerifiedAt(LocalDate.now());
-        account.setVerify(true);
+        copyAccountUpdateRequest(updateAccountRequest, account, idCard);
         return ResponseHelper.success(accountRepository.save(account));
     }
 }

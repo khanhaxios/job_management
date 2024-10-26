@@ -9,15 +9,13 @@ import java.util.Date;
 
 @Data
 public class UpdateAccountRequest {
-
     @NotBlank(message = "ID card cannot blank")
     private String ID;
     @Pattern(regexp = "(\\+84|0)\\d{9,10}", message = "Invalid phone number")
     private String phone;
 
     @Past(message = "Birthday has to a pass day")
- @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
-
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
     private LocalDate birthday;
 
     @NotNull
@@ -34,6 +32,6 @@ public class UpdateAccountRequest {
     private String address;
 
     @NotNull
-    @Size(min = 6,max = 6)
+    @Size(min = 6, max = 6)
     private String pin;
 }
