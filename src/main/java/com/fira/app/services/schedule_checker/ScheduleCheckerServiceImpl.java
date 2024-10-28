@@ -81,11 +81,11 @@ public class ScheduleCheckerServiceImpl implements ScheduleCheckerService {
         LocalDateTime timeStart = LocalDateTime.now().withHour(hoursByCheckIn[0]);
         LocalDateTime timeEnd = LocalDateTime.now().withHour(hoursByCheckIn[1]);
         // late
-        if (timeEnd.isAfter(timeMax)) {
-            late = timeEnd.toInstant(ZoneOffset.UTC).toEpochMilli() - timeMax.toInstant(ZoneOffset.UTC).toEpochMilli();
+        if (timeStart.isAfter(timeMin)) {
+            late = timeStart.toInstant(ZoneOffset.UTC).toEpochMilli() - timeMin.toInstant(ZoneOffset.UTC).toEpochMilli();
         }
         if (timeStart.isBefore(timeMin)) {
-            early = timeStart.toInstant(ZoneOffset.UTC).toEpochMilli() - timeMin.toInstant(ZoneOffset.UTC).toEpochMilli();
+            early = timeMin.toInstant(ZoneOffset.UTC).toEpochMilli() - timeStart.toInstant(ZoneOffset.UTC).toEpochMilli();
         }
         List<ScheduleChecker> isExists = checkerRepository.findAllByUserCheckedAndCheckedAtBetween(account, timeStart, timeEnd);
         if (isExists != null) {
@@ -124,10 +124,10 @@ public class ScheduleCheckerServiceImpl implements ScheduleCheckerService {
 
         LocalDateTime timeStart = LocalDateTime.now().withHour(hoursByCheckIn[0]);
         LocalDateTime timeEnd = LocalDateTime.now().withHour(hoursByCheckIn[1]);
-        if (timeStart.isAfter(timeMin)) {
+        if (timeEnd.isBefore(timeMin)) {
             earlyTime = timeMin.toInstant(ZoneOffset.UTC).toEpochMilli() - timeEnd.toInstant(ZoneOffset.UTC).toEpochMilli();
         } else {
-            lateTime = timeMin.toInstant(ZoneOffset.UTC).toEpochMilli() - timeMin.toInstant(ZoneOffset.UTC).toEpochMilli();
+            lateTime = timeEnd.toInstant(ZoneOffset.UTC).toEpochMilli() - timeMin.toInstant(ZoneOffset.UTC).toEpochMilli();
         }
         List<ScheduleChecker> isExists = checkerRepository.findAllByUserCheckedAndCheckedAtBetween(account, timeStart, timeEnd);
         if (isExists != null) {
