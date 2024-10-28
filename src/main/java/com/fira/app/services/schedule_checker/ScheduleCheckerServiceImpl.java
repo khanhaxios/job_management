@@ -124,7 +124,7 @@ public class ScheduleCheckerServiceImpl implements ScheduleCheckerService {
 
         LocalDateTime timeStart = LocalDateTime.now().withHour(hoursByCheckIn[0]);
         LocalDateTime timeEnd = LocalDateTime.now().withHour(hoursByCheckIn[1]);
-        if (timeEnd.isBefore(timeMin)) {
+        if (timeStart.isAfter(timeMin)) {
             earlyTime = timeMin.toInstant(ZoneOffset.UTC).toEpochMilli() - timeEnd.toInstant(ZoneOffset.UTC).toEpochMilli();
         } else {
             lateTime = timeMin.toInstant(ZoneOffset.UTC).toEpochMilli() - timeMin.toInstant(ZoneOffset.UTC).toEpochMilli();
